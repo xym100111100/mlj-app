@@ -1,10 +1,13 @@
 import React, { Component } from 'react';
-import { View, Text, StyleSheet, Image, Linking, Platform } from 'react-native';
+import { View, Text, Modal, StyleSheet, Image, Linking, Platform } from 'react-native';
 
 import { Heading1, Heading2, Heading3, Paragraph } from '../../widget/Text';
 import axios from 'axios';
-import { LayoutScroll, Touchable, Btn, Layout } from '../../componments/index';
+import { LayoutScroll, Touchable, Btn, Layout, Dialog } from '../../componments/index';
 import IdcardDialog from '../../container/IdcardDialog';
+import { getPixel } from '../../utils/screen';
+import ImagePicker from 'react-native-image-crop-picker';
+
 
 import DashSecondLine from '../../widget/DashSecondLine';
 
@@ -12,7 +15,7 @@ import DashSecondLine from '../../widget/DashSecondLine';
 import { connect } from 'react-redux';
 import Router from '../../Router';
 import { Images } from '../../common/images';
-import ImagePicker from 'react-native-image-picker';
+//import ImagePicker from 'react-native-image-picker';
 import { ToastShow } from '../../utils/toast';
 import { navigationConfig } from '../../common/navigation';
 import { API_ID, API_SECRET, Domain } from '../../common/config';
@@ -52,10 +55,57 @@ class AuthNameScreen extends Component<Props, State> {
       fileName: '',
       imgUrl: '',
       imgPath: '',
-      doNotOperate:false,
+      doNotOperate: false,
+      bDialogVisible: false
 
     };
   }
+
+  openCamera() {
+    ImagePicker.openCamera({
+      width: 300,
+      height: 400,
+    }).then(image => {
+      this.picketIdCardOcr2(image)
+
+    });
+  }
+
+
+  openPicker() {
+    ImagePicker.openPicker({
+    }).then(image => {
+   
+      this.picketIdCardOcr2(image)
+    });
+  }
+
+  picketIdCardOcr2(image) {
+
+    let { path } = image;
+
+    const i = path.lastIndexOf('/') + 1;
+    const suffixIndex = path.lastIndexOf('.') + 1;
+    const fileName = path.substring(i);
+    const sub_suffix = path.substring(suffixIndex);
+
+    const source = {
+      uri: path,
+      type: 'application/octet-stream',
+      name: fileName,
+    };
+
+    this.setState({
+      loadingVisible: true,
+      loadingTxt: '开始上传识别...',
+      suffix: sub_suffix,
+      source,
+    });
+
+    // 获取OSS上传签名
+    this.initOssSign();
+  }
+
 
   // 选择图片 并ocr
   picketIdCardOcr() {
@@ -112,7 +162,7 @@ class AuthNameScreen extends Component<Props, State> {
       } else if (response.customButton) {
         //  自定义按钮
       } else {
-        let { fileName, uri, path,data } = response;
+        let { fileName, uri, path, data } = response;
         let sub_suffix = '';
         if (!fileName) {
           const i = uri.lastIndexOf('/') + 1;
@@ -296,17 +346,17 @@ class AuthNameScreen extends Component<Props, State> {
   }
 
   // 提交确认信息
-  submitIdCardInfo=()=> {
-    if(this.state.doNotOperate){
-      ToastShow('操作过于频繁，请稍后再试',10);
-      return 
+  submitIdCardInfo = () => {
+    if (this.state.doNotOperate) {
+      ToastShow('操作过于频繁，请稍后再试', 10);
+      return
     }
     this.setState({
-      doNotOperate:true
+      doNotOperate: true
     })
-    window.doNotOperateTimeOut = setTimeout(()=>{
+    window.doNotOperateTimeOut = setTimeout(() => {
       this.setState({
-        doNotOperate:false
+        doNotOperate: false
       })
     }, 5000);
 
@@ -334,7 +384,7 @@ class AuthNameScreen extends Component<Props, State> {
     } else {
       sexBool = 0;
     }
-    let  payload = {
+    let payload = {
       // payload 里面是请求携带的参数
       certNo: this.props.AUTHNAMEIndex.frontUserInfo.number,
       certType: 1,
@@ -352,12 +402,12 @@ class AuthNameScreen extends Component<Props, State> {
       type: 'SubmitAuthName',
       payload: payload,
       callback: (res) => {
-       
+
         const msg = res.data;
 
-    //  window.TimeOut = setTimeout((function () {
-          ToastShow(msg);
-      //  }), 500);
+        //  window.TimeOut = setTimeout((function () {
+        ToastShow(msg);
+        //  }), 500);
 
         setTimeout(() => {
           Navigation.pop(this.props.componentId);
@@ -369,16 +419,16 @@ class AuthNameScreen extends Component<Props, State> {
   componentWillUnmount(): void {
     if (window.TimeOut) {
       clearTimeout(window.TimeOut);
-      
+
     }
-    if(window.doNotOperateTimeOut){
+    if (window.doNotOperateTimeOut) {
       clearTimeout(window.doNotOperateTimeOut);
     }
   }
 
   // 信息确认弹框
   showDialog() {
-    
+
     // 判断如果没有选择照片，不要弹框
     const { idBackUrl, idFrontUrl } = this.props.AUTHNAMEIndex;
 
@@ -400,7 +450,6 @@ class AuthNameScreen extends Component<Props, State> {
     const baseFrontUrl = { uri: idFrontUrl };
     const baseBackUrl = { uri: idBackUrl };
     const oColor = 'rgba(0,0,0,0.45)';
-
 
     return (
       <Layout showStatusBar={false} style={styles.page}>
@@ -425,8 +474,9 @@ class AuthNameScreen extends Component<Props, State> {
               <Touchable onPress={() => {
                 this.setState({
                   imgType: 'idcard_front',
+                  bDialogVisible: true
                 });
-                this.picketIdCardOcr();
+
               }}>
                 <Image style={styles.bankImg}
                   source={idFrontUrl !== '' ? baseFrontUrl : Images.authname.Idfront
@@ -441,8 +491,9 @@ class AuthNameScreen extends Component<Props, State> {
               onPress={() => {
                 this.setState({
                   imgType: 'idcard_back',
+                  bDialogVisible: true
                 });
-                this.picketIdCardOcr();
+
               }}
               style={styles.idFront}>
               <Image style={styles.bankImg}
@@ -500,6 +551,8 @@ class AuthNameScreen extends Component<Props, State> {
             </View>
 
           </View>
+
+
         </LayoutScroll>
         <Btn style={styles.bottoms} onPress={() => {
           this.showDialog();
@@ -518,6 +571,36 @@ class AuthNameScreen extends Component<Props, State> {
             });
           }}
         />}
+
+        {/*未实名弹框*/}
+        {this.state.bDialogVisible && <Dialog onClose={() => {
+          this.setState({
+            bDialogVisible: false,
+          });
+        }}>
+          <View style={styles.authDialog}>
+            <Image style={styles.aDialogImg} source={Images.my.NoAuthDialog} />
+            <Text style={styles.aDialogTxt}>请选择上传方式</Text>
+            <View style={styles.aDialogBtn}>
+              <Touchable onPress={() => {
+                this.setState({
+                  bDialogVisible: false,
+                });
+                this.openPicker()
+              }} style={[styles.aBtnBox, styles.aBtnLeft]}>
+                <Text style={[styles.aBtnBoxText, styles.aBtnLeftText]}>图库</Text>
+              </Touchable>
+              <Touchable onPress={() => {
+                this.setState({
+                  bDialogVisible: false,
+                });
+                this.openCamera()
+              }} style={[styles.aBtnBox, styles.aBtnRight]}>
+                <Text style={[styles.aBtnBoxText, styles.aBtnRightText]}>相机 </Text>
+              </Touchable>
+            </View>
+          </View>
+        </Dialog>}
       </Layout>
     );
   }
@@ -707,6 +790,62 @@ const styles = StyleSheet.create({
     width: 142.5,
     marginTop: 6,
   },
+
+
+  // 未认证弹框
+  authDialog: {
+    width: 293,
+    height: 234.5,
+    backgroundColor: '#fff',
+    borderRadius: 2,
+    flexDirection: 'column',
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  aDialogImg: {
+    width: 100,
+    height: 100,
+  },
+  aDialogTxt: {
+    fontSize: 16,
+    color: '#212121',
+    fontWeight: '600',
+    marginVertical: 16,
+  },
+  aDialogBtn: {
+    flexDirection: 'row',
+    height: 39.5,
+    width: 240,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  aBtnBox: {
+    width: 100.5,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 20,
+  },
+  aBtnBoxText: {
+    fontSize: 15,
+  },
+  aBtnLeft: {
+    borderColor: '#F64976',
+    borderWidth: getPixel(1),
+  },
+  aBtnRight: {
+    borderColor: '#F64976',
+    backgroundColor: '#F64976',
+    borderWidth: getPixel(1),
+  },
+  aBtnLeftText: {
+    color: '#F64976',
+  },
+  aBtnRightText: {
+    color: '#fff',
+  },
+
+
 });
 
 export default connect(({ AUTHNAMEIndex }) => ({ AUTHNAMEIndex }))(AuthNameScreen);
