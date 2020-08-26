@@ -8,7 +8,7 @@ import { Heading2, Heading3, Paragraph } from '../../widget/Text'
 // redux & router
 import { connect } from 'react-redux';
 import Router from '../../Router';
-import { LayoutScroll, Touchable, Btn } from '../../componments/index';
+import { LayoutScroll, Touchable, Btn ,Dialog} from '../../componments/index';
 // 跳转组件
 import { Navigation } from 'react-native-navigation';
 import color from '../../widget/color'
@@ -26,6 +26,7 @@ var width = Dimensions.get('window').width; //full width
 var height = Dimensions.get('window').height; //full width
 import ImagePicker from 'react-native-image-crop-picker';
 import Spinner from 'react-native-loading-spinner-overlay';
+import { getPixel } from '../../utils/screen';
 
 
 
@@ -55,7 +56,7 @@ class AuthUploadScreen extends Component<Props, State>{
             currentNum: 1,
             total: 0,
             loadingVisible: false,
-
+            bDialogVisible:false
         }
 
     }
@@ -109,6 +110,25 @@ class AuthUploadScreen extends Component<Props, State>{
     }
 
 
+    openCamera() {
+        ImagePicker.openCamera({
+            width: 300,
+            height: 400,
+        }).then(image => {
+            console.log(image)
+
+        });
+    }
+
+
+    openPicker() {
+        ImagePicker.openPicker({
+        }).then(image => {
+            console.log(image)
+        });
+    }
+
+
 
     uploadUserinfo2() {
         ImagePicker.openPicker({
@@ -157,7 +177,7 @@ class AuthUploadScreen extends Component<Props, State>{
                                     if (res.status === 200) {
                                         this.saveToreducers(host, dir, fileName[index])
                                     }
-                                    if(index + 1 == fileName.length){
+                                    if (index + 1 == fileName.length) {
                                         this.setState({
                                             loadingVisible: false,
                                         })
@@ -198,8 +218,8 @@ class AuthUploadScreen extends Component<Props, State>{
                         }
 
                     }
-                  
-                   
+
+
                 }
             })
 
@@ -607,7 +627,9 @@ class AuthUploadScreen extends Component<Props, State>{
 
                 <View style={styles.container_box}  >
                     <Touchable onPress={() =>
-                        this.uploadUserinfo2()
+                        this.setState({
+                            bDialogVisible:true
+                        })
                         // 添加图
                     } >
                         <Image style={styles.content_img} source={{ uri: 'http://res.jqtianxia.cn/test/add.png' }} />
@@ -664,7 +686,35 @@ class AuthUploadScreen extends Component<Props, State>{
                     </View>
                 </Modal>
 
-
+                {/*选择上传图片弹窗*/}
+                {this.state.bDialogVisible && <Dialog onClose={() => {
+                    this.setState({
+                        bDialogVisible: false,
+                    });
+                }}>
+                    <View style={styles.authDialog}>
+                        <Image style={styles.aDialogImg} source={Images.my.NoAuthDialog} />
+                        <Text style={styles.aDialogTxt}>请选择上传方式</Text>
+                        <View style={styles.aDialogBtn}>
+                            <Touchable onPress={() => {
+                                this.setState({
+                                    bDialogVisible: false,
+                                });
+                                this.openPicker()
+                            }} style={[styles.aBtnBox, styles.aBtnLeft]}>
+                                <Text style={[styles.aBtnBoxText, styles.aBtnLeftText]}>图库</Text>
+                            </Touchable>
+                            <Touchable onPress={() => {
+                                this.setState({
+                                    bDialogVisible: false,
+                                });
+                                this.openCamera()
+                            }} style={[styles.aBtnBox, styles.aBtnRight]}>
+                                <Text style={[styles.aBtnBoxText, styles.aBtnRightText]}>相机 </Text>
+                            </Touchable>
+                        </View>
+                    </View>
+                </Dialog>}
                 {/* <Btn style={styles.cardBtn} onPress={() => {
                     this.submitUpload();
                 }}>提交</Btn> */}
@@ -769,7 +819,63 @@ const styles = StyleSheet.create({
     siled_img: {
         width: width,
         height: 300
-    }
+    },
+
+
+    // 选择上传图片方式弹窗样式
+    //-----------
+    authDialog: {
+        width: 293,
+        height: 234.5,
+        backgroundColor: '#fff',
+        borderRadius: 2,
+        flexDirection: 'column',
+        alignItems: 'center',
+        paddingVertical: 20,
+    },
+    aDialogImg: {
+        width: 100,
+        height: 100,
+    },
+    aDialogTxt: {
+        fontSize: 16,
+        color: '#212121',
+        fontWeight: '600',
+        marginVertical: 16,
+    },
+    aDialogBtn: {
+        flexDirection: 'row',
+        height: 39.5,
+        width: 240,
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    aBtnBox: {
+        width: 100.5,
+        height: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 20,
+    },
+    aBtnBoxText: {
+        fontSize: 15,
+    },
+    aBtnLeft: {
+        borderColor: '#F64976',
+        borderWidth: getPixel(1),
+    },
+    aBtnRight: {
+        borderColor: '#F64976',
+        backgroundColor: '#F64976',
+        borderWidth: getPixel(1),
+    },
+    aBtnLeftText: {
+        color: '#F64976',
+    },
+    aBtnRightText: {
+        color: '#fff',
+    },
+    //-----------
 })
 export default connect(({ NSAuthpersonal, NSIndex }) => ({ NSAuthpersonal, NSIndex }))(AuthUploadScreen);
 

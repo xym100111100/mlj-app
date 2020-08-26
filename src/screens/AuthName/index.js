@@ -572,7 +572,7 @@ class AuthNameScreen extends Component<Props, State> {
           }}
         />}
 
-        {/*未实名弹框*/}
+        {/*选择上传图片弹窗*/}
         {this.state.bDialogVisible && <Dialog onClose={() => {
           this.setState({
             bDialogVisible: false,
@@ -792,7 +792,8 @@ const styles = StyleSheet.create({
   },
 
 
-  // 未认证弹框
+  // 选择上传图片方式弹窗样式
+  //-----------
   authDialog: {
     width: 293,
     height: 234.5,
@@ -844,7 +845,7 @@ const styles = StyleSheet.create({
   aBtnRightText: {
     color: '#fff',
   },
-
+//-----------
 
 });
 

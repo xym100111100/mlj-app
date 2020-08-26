@@ -23,6 +23,7 @@ import { Images } from '../../common/images';
 import { ToastShow } from '../../utils/toast';
 import RNRestart from 'react-native-restart';
 import Spinner from 'react-native-loading-spinner-overlay';
+import { getPixel } from '../../utils/screen';
 
 import ImagePicker from 'react-native-image-crop-picker';
 import Swiper from 'react-native-swiper';
@@ -93,7 +94,7 @@ class AlipayScreen extends Component<Props, State>{
 
 
   // 当前用户是否已经上传图
-  InitGetUserImgList() { 
+  InitGetUserImgList() {
     if (this.props.NSAuthpersonal.selectCreditTypeNo.number > 0) {
       const { dispatch } = this.props;
       dispatch({
@@ -119,12 +120,12 @@ class AlipayScreen extends Component<Props, State>{
     const { creditTypeKey } = this.props.NSAuthpersonal.selectCreditTypeNo;
     console.log('creditTypeKey:' + creditTypeKey)
     ImagePicker.openPicker({
-      width: 300, 
+      width: 300,
       height: 400,
       multiple: true,
     }).then(image => {
       console.log(image)
-      if(image.length > 9){
+      if (image.length > 9) {
         ToastShow('一次最多只能选9张');
         return
       }
@@ -143,8 +144,8 @@ class AlipayScreen extends Component<Props, State>{
             });
             if (image.length > 1) {
               image.map((item, index) => {
-               
-                const { host, accessId, dir, policy, signature, callback} = res.data;
+
+                const { host, accessId, dir, policy, signature, callback } = res.data;
                 let fileName = res.data.fileName.replace(/\s/g, "").split(",")
 
                 const data_params = new FormData();
@@ -177,13 +178,13 @@ class AlipayScreen extends Component<Props, State>{
                       imgList: [...this.state.imgList, urlPath]
                     })
                     isCommit = true
-                    
+
                   }
                   if (index + 1 == fileName.length) {
-                   
+
                     this.setState({
                       loadingVisible: false,
-                    },()=>{
+                    }, () => {
                       this.submitUpload()
                     })
                   }
@@ -269,7 +270,7 @@ class AlipayScreen extends Component<Props, State>{
 
 
   onSwiperIndexChanged = (index) => {
- 
+
     this.setState({
       currentNum: index + 1
     })
@@ -557,7 +558,7 @@ class AlipayScreen extends Component<Props, State>{
   render() {
     const { imagesModal, imgList } = this.state;
     const oColor = 'rgba(0,0,0,0.45)';
- 
+
 
     // if(!imgList ){ 
     //   imgList = [0,0];
@@ -663,7 +664,7 @@ class AlipayScreen extends Component<Props, State>{
                       </View>
                     )
 
-                  }):<View></View>
+                  }) : <View></View>
                 }
 
               </Swiper>
@@ -683,7 +684,35 @@ class AlipayScreen extends Component<Props, State>{
           </View>
         </Modal>
 
-
+        {/*选择上传图片弹窗*/}
+        {this.state.bDialogVisible && <Dialog onClose={() => {
+          this.setState({
+            bDialogVisible: false,
+          });
+        }}>
+          <View style={styles.authDialog}>
+            <Image style={styles.aDialogImg} source={Images.my.NoAuthDialog} />
+            <Text style={styles.aDialogTxt}>请选择上传方式</Text>
+            <View style={styles.aDialogBtn}>
+              <Touchable onPress={() => {
+                this.setState({
+                  bDialogVisible: false,
+                });
+                this.openPicker()
+              }} style={[styles.aBtnBox, styles.aBtnLeft]}>
+                <Text style={[styles.aBtnBoxText, styles.aBtnLeftText]}>图库</Text>
+              </Touchable>
+              <Touchable onPress={() => {
+                this.setState({
+                  bDialogVisible: false,
+                });
+                this.openCamera()
+              }} style={[styles.aBtnBox, styles.aBtnRight]}>
+                <Text style={[styles.aBtnBoxText, styles.aBtnRightText]}>相机 </Text>
+              </Touchable>
+            </View>
+          </View>
+        </Dialog>}
         {/* <Btn style={styles.cardBtn} onPress={() => {
           this.submitUpload();
         }}>提交</Btn> */}
@@ -799,7 +828,63 @@ const styles = StyleSheet.create({
   siled_img: {
     width: width,
     height: 300
-  }
+  },
+
+
+  // 选择上传图片方式弹窗样式
+  //-----------
+  authDialog: {
+    width: 293,
+    height: 234.5,
+    backgroundColor: '#fff',
+    borderRadius: 2,
+    flexDirection: 'column',
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  aDialogImg: {
+    width: 100,
+    height: 100,
+  },
+  aDialogTxt: {
+    fontSize: 16,
+    color: '#212121',
+    fontWeight: '600',
+    marginVertical: 16,
+  },
+  aDialogBtn: {
+    flexDirection: 'row',
+    height: 39.5,
+    width: 240,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  aBtnBox: {
+    width: 100.5,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 20,
+  },
+  aBtnBoxText: {
+    fontSize: 15,
+  },
+  aBtnLeft: {
+    borderColor: '#F64976',
+    borderWidth: getPixel(1),
+  },
+  aBtnRight: {
+    borderColor: '#F64976',
+    backgroundColor: '#F64976',
+    borderWidth: getPixel(1),
+  },
+  aBtnLeftText: {
+    color: '#F64976',
+  },
+  aBtnRightText: {
+    color: '#fff',
+  },
+  //-----------
 
 })
 export default connect(({ NSAuthpersonal, NSIndex, NSBasic }) => ({ NSAuthpersonal, NSIndex, NSBasic }))(AlipayScreen);
